@@ -1,4 +1,5 @@
 import Phaser from "phaser"
+import ScoreLabel from '../ui/ScoreLabel'
 
 export default class MathFighterScene extends Phaser.Scene{
 
@@ -34,7 +35,10 @@ export default class MathFighterScene extends Phaser.Scene{
         this.correctAnswer = undefined
         this.playerAttack = false
         this.enemyAttack = false
-
+        this.scoreLabel = 0
+        this.timerLabel = undefined
+        this.countdownTimer = 10
+        this.timedEvent = undefined
 
     }
 
@@ -95,7 +99,9 @@ export default class MathFighterScene extends Phaser.Scene{
             this.physics.add.overlap(this.slash, this.player, this.spriteHit, null, this)
             this.physics.add.overlap(this.slash, this.enemy, this.spriteHit, null, this)
 
-            
+            this.scoreLabel = this.createScoreLabel(26, 16, 0)
+            this.timerLabel = this.add.text(this.gameHalfWidth, 16, null)
+                .setDepth(5)
 
     }
 
@@ -121,6 +127,15 @@ export default class MathFighterScene extends Phaser.Scene{
                 this.createSlash(this.enemy.x - 60, this.enemy.y, 2, -600) 
             })
             this.enemyAttack = true
+        }
+
+        if(this.startGame){
+            this.timerLabel.setStyle({
+                fontSize: '24px',
+                fill : '#000',
+                fontStyle: 'bold',
+                align : 'center'
+            }). setText(this.countdownTimer.toString())
         }
     }
 
@@ -195,6 +210,13 @@ export default class MathFighterScene extends Phaser.Scene{
 
        this.input.on('gameobjectdown', this.addNumber, this) 
        this.generateQuestion()
+
+       this.timedEvent = this.time.addEvent({
+        delay: 1000,
+        callback: this.gameOver,
+        callbackScope: this,
+        loop: true
+    })
     }
 
     createButtons(){
@@ -357,9 +379,13 @@ export default class MathFighterScene extends Phaser.Scene{
         slash.setVisible(false)
 
         if(sprite.texture.key == 'player') {
-            sprite.anims.play('player-hit', true)            
+            sprite.anims.play('player-hit', true)      
+            if(this.scoreLabel.getScore() > 0) {
+                this.scoreLabel.add(-50)
+            }      
         } else {
-            sprite.anims.play('enemy-hit', true)            
+            sprite.anims.play('enemy-hit', true)   
+            this.scoreLabel.add(50)         
         }
 
         this.time.delayedCall(500, () => {
@@ -370,6 +396,26 @@ export default class MathFighterScene extends Phaser.Scene{
             }
         )   
     }
+
+    createScoreLabel(x, y, score)
+    {
+        const style = { fontSize: '24px', fill: '#000', fontStyle: 'bold' }
+        const label = new ScoreLabel(this, x, y, score, style).setDepth(1)
+
+        this.add.existing(label)
+
+        return label
+    }
+
+    gameOver()
+    {
+        this.countdownTimer -= 1
+        if (this.countdownTimer < 0) {
+            this.scene.start('game-over-scene', {score: this.scoreLabel.getScore() })
+        }
+    }
+
+   
 
 
 
