@@ -28,6 +28,10 @@ export default class MathFighterScene extends Phaser.Scene{
         this.button1 = undefined
         this.buttonDel = undefined
         this.buttonOk = undefined
+        this.numberArray = []
+        this.number = 0
+        this.question = []
+
 
     }
 
@@ -77,7 +81,7 @@ export default class MathFighterScene extends Phaser.Scene{
 
              // start the gameStart
             let start_button = this.add.image(this.gameHalfWidth, this.gameHalfHeight + 181, 'start-btn')
-            .setInteractive()
+                .setInteractive()
 
             start_button.on('pointerdown', () => {
                 this.gameStart()
@@ -85,7 +89,7 @@ export default class MathFighterScene extends Phaser.Scene{
             }, this)
             // end the gameStart
 
-            this.createButtons()
+            
 
     }
 
@@ -152,16 +156,18 @@ export default class MathFighterScene extends Phaser.Scene{
     }
 
     gameStart(){
-        this.startGame = true
-        this.player.anims.play('player-standby', true)
-        this.enemy.anims.play('enemy-standby', true)
+       this.startGame = true
 
-        this.resultText = this.add.text(this.gameHalfWidth, 
-            // @ts-ignore
-            400, '0' ,{ fontSize: '32px', fill: '#000'})
-        this.questionText = this.add.text(this.gameHalfWidth, 
-            // @ts-ignore
-            200, '0',{ fontSize: '32px', fill: '#000'})
+       this.player.anims.play('player-standby', true)
+       this.enemy.anims.play('enemy-standby', true)
+
+       this.resultText = this.add.text(this.gameHalfWidth, 200, '0', { fontSize : '32px', color: '#000'})
+       this.questionText = this.add.text(this.gameHalfWidth, 100, '0', { fontSize : '32px', color: '#000' })
+
+       this.createButtons()
+
+       this.input.on('gameobjectdown', this.addNumber, this) 
+       this.generateQuestion()
     }
 
     createButtons(){
@@ -169,36 +175,136 @@ export default class MathFighterScene extends Phaser.Scene{
         const widthDifference = 131
         const heightDifference = 71.25
 
+                // tengah
         this.button2 = this.add.image(this.gameHalfWidth, startPositionY, 'numbers', 1)
-            .setInteractive().setData('value', 2)
+                               .setInteractive()
+                               .setData('value', 2)
         this.button5 = this.add.image(this.gameHalfWidth, this.button2.y + heightDifference, 'numbers', 4)
-            .setInteractive().setData('value', 5)
+                               .setInteractive()
+                               .setData('value', 5)
         this.button8 = this.add.image(this.gameHalfWidth, this.button5.y + heightDifference, 'numbers', 7)
-            .setInteractive().setData('value', 8)
+                               .setInteractive()
+                               .setData('value', 8)
         this.button0 = this.add.image(this.gameHalfWidth, this.button8.y + heightDifference, 'numbers', 10)
-            .setInteractive().setData('value', 0)
+                               .setInteractive()
+                               .setData('value', 0)
+
+        // kiri
         this.button1 = this.add.image(this.button2.x - widthDifference, startPositionY, 'numbers', 0)
-            .setInteractive().setData('value', 1)
+                .setInteractive()
+                .setData('value', 1)
         this.button4 = this.add.image(this.button5.x - widthDifference, this.button1.y + heightDifference, 'numbers', 3)
-            .setInteractive().setData('value', 4)
+                .setInteractive()
+                .setData('value', 4)
         this.button7 = this.add.image(this.button8.x - widthDifference, this.button4.y + heightDifference, 'numbers', 6)
-            .setInteractive().setData('value', 7)
+                .setInteractive()
+                .setData('value', 7)
         this.buttonDel = this.add.image(this.button0.x - widthDifference, this.button7.y + heightDifference, 'numbers', 9)
-            .setInteractive().setData('value', 'del')
+                .setInteractive()
+                .setData('value', 'del')         
+                
+        // kanan
         this.button3 = this.add.image(this.button2.x + widthDifference, startPositionY, 'numbers', 2)
-            .setInteractive().setData('value', 3)
+                .setInteractive()
+                .setData('value', 3)
         this.button6 = this.add.image(this.button5.x + widthDifference, this.button3.y + heightDifference, 'numbers', 5)
-            .setInteractive().setData('value', 6)
+                .setInteractive()
+                .setData('value', 6)
         this.button9 = this.add.image(this.button8.x + widthDifference, this.button6.y + heightDifference, 'numbers', 8)
-            .setInteractive().setData('value', 9)
+                .setInteractive()
+                .setData('value', 9)
         this.buttonOk = this.add.image(this.button0.x + widthDifference, this.button9.y + heightDifference, 'numbers', 11)
-            .setInteractive().setData('value', 'ok')
+                .setInteractive()
+                .setData('value', 'ok')   
+    }
 
+    addNumber(pointer, object, event){
+        let value = object.getData('value')
+        if (isNaN(value)) {
+            if(value == 'del') {
+                this.numberArray.pop()
 
+                if(this.numberArray.length < 1) {
+                    this.numberArray[0] = 0
+                }
+            }
+           if(value == 'ok') {
+                this.checkAnswer()
+                this.numberArray = [] //tanya
+                this.numberArray[0] = 0
+            }
+        } else {
+            if (this.numberArray.length === 1 && this.numberArray[0] === 0){
+                this.numberArray[0] = value
+            } else {
+                if (this.numberArray.length < 10){
+                    this.numberArray.push(value)
+                }
+            }
+        }
+        
+        this.number = parseInt(this.numberArray.join('')) 
 
+        this.resultText.setText(this.number.toString())
 
+        const textHalfWidth = this.resultText.width * 0.5
 
+        this.resultText.setX(this.gameHalfWidth - textHalfWidth)
 
+        event.stopPropagation()
+
+    }
+
+    checkAnswer(){
+
+    }
+
+    getOperator() {
+        const operator =['+', '-', 'x', ':']
+        return operator[Phaser.Math.Between(0, operator.length - 1)]
+    }
+
+    generateQuestion() {
+        let numberA = Phaser.Math.Between(0, 50)
+        let numberB = Phaser.Math.Between(0, 50)
+        let operator = this.getOperator()
+
+        if (operator === '+') {
+            this.question[0] = `${numberA} + ${numberB}`
+            this.question[1] = numberA + numberB
+        }
+
+        if(operator === '-') {
+            if(numberB > numberA) {
+                this.question[0] = `${numberB} - ${numberA}`
+                this.question[1] = numberB - numberA
+            } else {
+                this.question[0] = `${numberA} - ${numberB}`
+                this.question[1] = numberA - numberB
+            }
+        }
+
+        
+        if (operator === 'x') {
+            this.question[0] = `${numberA} x ${numberB}`
+            this.question[1] = numberA * numberB
+        }
+
+        
+        if (operator === ':') {
+            do {
+                numberA = Phaser.Math.Between(0, 50)
+                numberB = Phaser.Math.Between(0, 50)                
+            }
+            while (! Number.isInteger(numberA/numberB))
+
+            this.question[0] = `${numberA} : ${numberB}`
+            this.question[1] = numberA / numberB
+        }
+
+        this.questionText.setText(this.question[0])
+        const textHalfWidth = this.questionText.width * 0.5
+        this.questionText.setX(this.gameHalfWidth - textHalfWidth)
     }
 
 
